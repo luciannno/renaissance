@@ -1,0 +1,42 @@
+import MySQLdb
+import MySQLdb.cursors
+
+class DBAccess(object):
+
+    _db_connection = None
+    _db_cur = None
+
+    def __init__(self):
+        self._db_connection = MySQLdb.connect('localhost', 'renaissance', 'luciano', 'renaissance', cursorclass=MySQLdb.cursors.DictCursor)
+        self._db_cur = self._db_connection.cursor()
+
+    def query(self, query, params=""):
+        return self.getCursor().execute(query, params)
+
+    def getConnection(self):
+        return self._db_connection
+
+    def getCursor(self):
+        return self._db_cur
+
+    def updateRow(self, table, **data):
+        idName = table + "_id"
+        id = data[idName]
+        del data[idName]
+        sets = []
+        for key in data.keys():
+            sets.append("%s = %%s" % key)
+            set = ', '.join(sets)
+            qq = "UPDATE %s SET %s WHERE %s = %%s" % (table, set, idName,)
+            self.getCursor().execute(qq, tuple(data.values()+[id]))
+
+    def insertRow(self, table, **data):
+        keys = ', '.join(data.keys())
+        vals = ', '.join(["%s"] * len(data.values()))
+        qq = "INSERT INTO %s (%s) VALUES (%s)" % (table, keys, vals)
+        self.getCursor().execute(qq, tuple(data.values()))
+	self._db_connection.commit()
+        #return self.getCursor().lastrowid
+
+    def __del__(self):
+        self._db_connection.close()

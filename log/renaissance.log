@@ -1,0 +1,6 @@
+2016-04-22 06:02:56,182 - renaissance - INFO - ---------------------- 22/04/2016 ---------------------------
+2016-04-22 06:02:56,182 - renaissance - INFO - Started at 06:02:56
+2016-04-22 06:02:56,186 - renaissance - CRITICAL - IB error id -1 errorcode 502 string Couldn't connect to TWS.  Confirm that "Enable ActiveX and Socket Clients" is enabled on the TWS "Configure->API" menu.
+2016-04-22 06:02:56,186 - renaissance - INFO - Initialise Portfolio Renaissance v0.1
+2016-04-22 06:02:56,188 - renaissance - INFO - Add Strategy: sentinelle.strategy.volumeAndPrice
+2016-04-22 06:02:56,190 - renaissance - CRITICAL - IB error id 3395 errorcode 504 string Not connected

@@ -1,0 +1,83 @@
+
+import urllib, time, os, re
+import urllib2, json, datetime
+import googlefinance
+
+class GoogleAccess(object):
+
+    def __init__(self):
+	pass
+
+    def getIntradayQuote(self,symbol,time_zone,interval_seconds=60,num_days=5):
+
+        #http://www.google.com/finance/getprices?q=IXIC&x=INDEXNASDAQ&i=60&p=5d&f=d,o,h,l,c,v
+
+        exchange, instrument = symbol.split(':')
+        url_string = "http://www.google.com/finance/getprices?q={0}&x={1}".format(instrument, exchange)
+        url_string += "&i={0}&p={1}d&f=d,o,h,l,c,v".format(interval_seconds,num_days)
+
+        csv = urllib.urlopen(url_string).readlines()
+        quotes = []
+
+        for bar in xrange(7,len(csv)):
+
+            if csv[bar].count(',') != 5: continue
+
+            offset,close,high,low,open_,volume = csv[bar].split(',')
+
+            if offset[0] == 'a':
+                day = float(offset[1:])
+                offset = 0
+            else:
+                offset = float(offset)
+
+            open_, high, low, close = [float(x) for x in [open_,high,low,close]]
+            dt = datetime.datetime.fromtimestamp(day + (interval_seconds*offset) )
+
+            quotes.append([dt,open_,high,low,close,volume])
+
+        return quotes
+
+
+    def fetchGF(self, googleticker):
+
+        url = "http://www.google.com/finance?&q="
+        txt = urllib.urlopen(url+googleticker).read()
+        k = re.search('id="ref_(.*?)">(.*?)<',txt)
+
+        if k:
+            tmp = k.group(2)
+            q = tmp.replace(',','')
+        else:
+            q = "Nothing found for: %s" % (googleticker)
+        
+        return q
+
+    def combine(self, ticker):
+        quote = self.fetchGF(ticker) # use the core-engine function
+        t = time.localtime()    # grasp the moment of time
+        output = [t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,  # build a list
+                  t.tm_min,t.tm_sec,ticker,quote]
+        return output
+
+    def fetchPreMarket(self, ticker):
+
+        link = "http://finance.google.com/finance/info?client=ig&q="
+        #link = "http://www.google.com/finance/info?infotype=infoquoteall&q="
+        url = link+"%s" % (ticker)
+        u = urllib2.urlopen(url)
+        content = u.read()
+        data = json.loads(content[3:])
+        info = data[0]
+
+        try:
+            t = str(info["lt"].replace(',', ''))    # time stamp
+            l = float(info["l"].replace(',', ''))    # close price (previous trading day)
+        #p = float(info["el"])   # stock price in pre-market (after-hours)
+            p = 0.
+        except:
+            t = 0
+            l = 0
+            p = 0
+
+        return (t,l,p)

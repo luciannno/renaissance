@@ -1,0 +1,47 @@
+
+import urllib, time, os, re
+import urllib2, json, datetime
+
+class YahooAccess(object):
+
+    def __init__(self):
+	pass
+
+    def getIntradayQuote(self,symbol,time_zone,interval_seconds=60,num_days=5):
+
+        start_date = '2016-02-01'
+        end_date = '2016-02-04'
+
+        start_year,start_month,start_day = start_date.split('-') 
+        start_month = str(int(start_month)-1)
+        end_year,end_month,end_day = end_date.split('-')
+        end_month = str(int(end_month)-1)
+
+        #url_string = "http://ichart.finance.yahoo.com/table.csv?s={0}".format(symbol)
+        #url_string += "&a={0}&b={1}&c={2}".format(start_month,start_day,start_year)
+        #url_string += "&d={0}&e={1}&f={2}".format(end_month,end_day,end_year)
+
+	#print url_string
+
+	url_string = "http://chartapi.finance.yahoo.com/instrument/1.0/%s/" % (symbol)
+	url_string += "chartdata;type=quote;range=1d/csv"
+
+	print url_string
+
+        csv = urllib.urlopen(url_string).readlines()
+        csv.reverse()
+
+        quotes = []
+
+        for bar in xrange(17,len(csv)-1):
+
+            ds,open_,high,low,close,volume = csv[bar].rstrip().split(',')
+            open_,high,low,close = [float(x) for x in [open_,high,low,close]]
+            #if close != adjc:
+            #    factor = adjc/close
+            #    open_,high,low,close = [x*factor for x in [open_,high,low,close]]
+            dt = datetime.datetime.fromtimestamp(int(ds))
+            quotes.append([dt,open_,high,low,close,volume])
+
+        #quotes.append([dt,open_,high,low,close,volume])
+        return quotes

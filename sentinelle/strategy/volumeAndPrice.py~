@@ -1,0 +1,53 @@
+from decimal import Decimal
+from renaissance.strategy import BaseStrategy
+
+class volumeAndPrice(BaseStrategy):
+        
+    def initialise(self):
+        
+        self.tickers = ['EUROSTOXX50 MARCH 16']
+        
+        self.limit = 1
+        self.freq = 15
+        
+    def run(self):
+        
+        index = -1
+        price_date = self.data.price_date[index]
+        close_price = Decimal(self.data.close_price[index])
+        open_price = Decimal(self.data.open_price[index])
+        volume = Decimal(self.data.volume[index])
+        trade = 0
+        
+        strategy_volume = [55000]
+        orderType = self.broker.MARKET
+        
+        contract = self.broker.createContract(secType=self.instrument.ib_secType[0],
+                                        symbol=self.instrument.ib_symbol[0],
+                                        exchange=self.instrument.world_ex_id[0],
+                                        expiry=self.instrument.expiry[0])
+        
+        self.logger.info("Running Strategy for %s" % self.tickers[self.ticker_idx])
+        self.logger.info("close: %s Open: %s Date: %s" % (close_price, open_price, price_date))
+        self.logger.debug("Data %s" % (self.data.to_string(index=False, header=False)))
+    
+        #print self.broker.getAccountData()
+    
+        if (volume >= strategy_volume[self.ticker_idx]):
+            if (open_price > close_price):
+                trade = 10
+                stopPrice = int(round(close_price*Decimal(0.994),0))
+                trailStopPrice = int(round(close_price*Decimal(1.004), 0))
+                self.logger.info("=> Should BUY stop: %f trail: %f" % (stopPrice, trailStopPrice))
+                orderid = self.broker.generateSignal(contract, trade=trade, orderType=orderType, stopPrice=stopPrice, trailStopPrice=trailStopPrice)
+            elif (open_price < close_price):
+                trade = -10
+                stopPrice = int(round(close_price*Decimal(1.006), 0))
+                trailStopPrice = int(round(close_price*Decimal(0.996), 0))
+                self.logger.info("=> Should SELL stop: %f trail: %f" % (stopPrice, trailStopPrice))
+                orderid = self.broker.generateSignal(contract, trade=trade, orderType=orderType, stopPrice=stopPrice, trailStopPrice=trailStopPrice)
+            else:
+                self.logger.info("Dont know")
+            
+        else:
+            self.logger.info("Not sufficient volume: %f" % (volume))
